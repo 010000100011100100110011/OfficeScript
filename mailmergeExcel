@@ -1,0 +1,24 @@
+function main(workbook: ExcelScript.Workbook) {
+  // Open the Word document to use as the mail merge template
+  let wordDoc = Word.run(async (context) => {
+    return context.application.documents.open("path/to/template.docx");
+  });
+
+  // Perform the mail merge
+  await wordDoc.mailMerge.execute({
+    dataSource: {
+      type: Word.MailMergeDataSourceType.Excel,
+      connection: {
+        fileName: workbook.getFileProperties().url
+      },
+      // Set the name of the Excel table containing the data
+      tableName: "Table1",
+      // Set the fields to use in the mail merge
+      fieldNames: ["FirstName", "LastName", "Email"]
+    }
+  });
+
+  // Save the merged document and close Word
+  await wordDoc.save();
+  await wordDoc.close();
+}
