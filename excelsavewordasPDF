@@ -1,0 +1,12 @@
+function main(workbook: ExcelScript.Workbook) {
+  // Open the Word document to save as PDF
+  let wordDoc = Word.run(async (context) => {
+    return context.application.documents.open("path/to/document.docx");
+  });
+
+  // Save the document as PDF
+  await wordDoc.saveAs("path/to/document.pdf", Word.SaveFormat.PDF);
+
+  // Close the Word document
+  await wordDoc.close();
+}
