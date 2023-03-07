@@ -1,27 +1,29 @@
-async function uploadToSharePoint() {
-  // Replace the URL and list name with your SharePoint site and list
-  const url = "https://yourdomain.sharepoint.com/sites/yourSite/";
-  const listName = "Your List Name";
-  
-  // Get the data from the active worksheet
-  const sheet = context.workbook.worksheets.getActiveWorksheet();
-  const range = sheet.getUsedRange();
-  const values = range.getValues();
-  
-  // Get the SharePoint list
-  const list = context.web.lists.getByTitle(listName);
-  
-  // Add the data to the list
-  for (let i = 1; i < values.length; i++) {
-    const item = {
-      Title: values[i][0],
-      Description: values[i][1],
-      Status: values[i][2]
-      // Add additional fields as needed
-    };
-    await list.items.add(item);
-  }
-  
-  // Save the changes
-  await context.sync();
+async function main() {
+// Declare variable types
+let excelTable: Excel.Table;
+let sharePointList: SharePoint.ISPList;
+let rows: Excel.Range[];
+let rowData: object;
+
+// Get the Excel table and SharePoint list
+excelTable = context.workbook.tables.getItem("Table1");
+sharePointList = context.sharepoint.lists.getByTitle("MyList");
+
+// Get the data from the Excel table
+rows = excelTable.getDataBodyRange().getValues();
+
+// Loop through the rows and upload the data to the SharePoint list
+rows.forEach((row) => {
+  rowData = {
+    Title: row[0], // Assumes the first column of the Excel table contains the "Title" column in the SharePoint list
+    Description: row[1], // Assumes the second column of the Excel table contains the "Description" column in the SharePoint list
+    Date: row[2], // Assumes the third column of the Excel table contains the "Date" column in the SharePoint list
+  };
+
+  sharePointList.items.add(rowData);
+});
+
+// Execute the context
+await context.sync();
+
 }
