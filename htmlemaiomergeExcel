@@ -1,0 +1,66 @@
+function sendHtmlEmailFromExcelData() {
+  // Replace "Shared Mailbox" with the name of your shared mailbox.
+  const sharedMailbox = Office.context.mailbox.restUrl + '/mailboxes/Shared Mailbox';
+
+  // Replace the email address in the "to" field with the recipient's email address.
+  const to = [{ emailAddress: { address: 'recipient@example.com' } }];
+
+  // Replace the email address in the "from" field with the shared mailbox's email address.
+  const from = { emailAddress: { address: 'shared.mailbox@example.com' } };
+
+  // Replace the subject of the email with your own content.
+  const subject = 'HTML email from Excel data';
+
+  // Get the data from the Excel table.
+  const worksheet = context.workbook.worksheets.getItem('Sheet1');
+  const table = worksheet.tables.getItem('Table1');
+  const dataRange = table.getDataBodyRange();
+  dataRange.load('values');
+  await context.sync();
+
+  // Build the HTML body of the email using the data from the Excel table.
+  let body = '<html><body><table>';
+  body += '<tr><th>Column 1</th><th>Column 2</th></tr>';
+  dataRange.values.forEach((row) => {
+    body += '<tr>';
+    body += '<td>' + row[0] + '</td>';
+    body += '<td>' + row[1] + '</td>';
+    body += '</tr>';
+  });
+  body += '</table></body></html>';
+
+  // Set up the email message object.
+  const message = {
+    toRecipients: to,
+    from: from,
+    subject: subject,
+    body: {
+      contentType: 'html',
+      content: body,
+    },
+  };
+
+  // Send the email message.
+  Office.context.mailbox.makeEwsRequestAsync(
+    '<SendMessage xmlns="http://schemas.microsoft.com/exchange/services/2006/messages">' +
+      '<SaveItemToFolderResponseShape IncludeMimeContent="true" />' +
+      '<ItemIds><t:FolderId Id="' + sharedMailbox + '/sentitems" /></ItemIds>' +
+      '<Items><t:Message>' +
+      '<t:ItemClass>IPM.Note</t:ItemClass>' +
+      '<t:Subject>' + message.subject + '</t:Subject>' +
+      '<t:Body BodyType="HTML">' + message.body.content + '</t:Body>' +
+      '<t:ToRecipients>' +
+      message.toRecipients.map((recipient) => '<t:Mailbox><t:EmailAddress>' + recipient.emailAddress.address + '</t:EmailAddress></t:Mailbox>').join('') +
+      '</t:ToRecipients>' +
+      '<t:From><t:Mailbox><t:EmailAddress>' + message.from.emailAddress.address + '</t:EmailAddress></t:Mailbox></t:From>' +
+      '</t:Message></Items>' +
+      '</SendMessage>',
+    (asyncResult) => {
+      if (asyncResult.status === 'succeeded') {
+        console.log('Email sent successfully!');
+      } else {
+        console.error('Error sending email: ' + asyncResult.error.message);
+      }
+    }
+  );
+}
