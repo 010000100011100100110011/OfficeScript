@@ -1,0 +1,27 @@
+async function uploadToSharePoint() {
+  // Replace the URL and list name with your SharePoint site and list
+  const url = "https://yourdomain.sharepoint.com/sites/yourSite/";
+  const listName = "Your List Name";
+  
+  // Get the data from the active worksheet
+  const sheet = context.workbook.worksheets.getActiveWorksheet();
+  const range = sheet.getUsedRange();
+  const values = range.getValues();
+  
+  // Get the SharePoint list
+  const list = context.web.lists.getByTitle(listName);
+  
+  // Add the data to the list
+  for (let i = 1; i < values.length; i++) {
+    const item = {
+      Title: values[i][0],
+      Description: values[i][1],
+      Status: values[i][2]
+      // Add additional fields as needed
+    };
+    await list.items.add(item);
+  }
+  
+  // Save the changes
+  await context.sync();
+}
